@@ -3,4 +3,24 @@ dist/
 .env
 *.log
 .DS_Store
+label-discovery-results.json
+label-discovery-1040-results.json
+label-discovery-5k-results.json
+label-discovery-combined-results.json
+
+# IDE files
+.cursor/
+
+# Temporary test files
+test-temp-wallet.ts
+
+# Private wallet address lists
+test_wallet
+wallet_list_v2
+
+# Test scripts (not for production)
+src/test-100-wallets.ts
+src/test-1040-labels.ts
+src/test-5k-labels.ts
+src/utils/delay.ts
 

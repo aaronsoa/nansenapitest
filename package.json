@@ -9,6 +9,9 @@
     "dev": "ts-node src/index.ts",
     "test": "ts-node src/test.ts",
     "test-wallet": "ts-node src/test-runner.ts",
+    "test-100-wallets": "ts-node src/test-100-wallets.ts",
+    "test-1040-labels": "ts-node src/test-1040-labels.ts",
+    "test-5k-labels": "ts-node src/test-5k-labels.ts",
     "generate-prices": "ts-node src/scripts/generateEthPrices.ts"
   },
   "keywords": ["crypto", "wallet", "nansen", "coingecko", "blockchain"],
