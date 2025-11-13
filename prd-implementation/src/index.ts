@@ -1,8 +1,12 @@
 #!/usr/bin/env node
 
+import dotenv from 'dotenv';
 import inquirer from 'inquirer';
 import ora from 'ora';
 import chalk from 'chalk';
+
+// Load environment variables from .env file
+dotenv.config();
 import { validateAndNormalizeAddress, truncateAddress } from './utils/validation';
 import {
   displayFunFact,

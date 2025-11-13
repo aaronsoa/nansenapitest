@@ -189,10 +189,20 @@ function displayResult(number: number, title: string, result: FunFact) {
       if (result.success && result.data) {
         if (result.data.ruggedCount > 0) {
           const tokenList = result.data.ruggedTokens
-            .map((t) => `  • ${t.symbol} (${t.name}) - Liquidity: ${formatUSD(t.liquidity)}`)
-            .join('\n');
+            .map((t) => {
+              const confidenceColor = t.confidence === 'HIGH' ? chalk.red : chalk.yellow;
+              const loss = formatPercentColored(t.lossPercent);
+              return `  • ${chalk.bold(t.symbol)} (${t.chain})\n` +
+                     `    Invested: ${formatUSD(t.amountInvested)} → Now: ${formatUSD(t.currentValue)}\n` +
+                     `    Loss: ${formatUSD(t.lossAmount)} (${loss})\n` +
+                     `    Confidence: ${confidenceColor(t.confidence)}`;
+            })
+            .join('\n\n');
+          const totalLossText = result.data.totalLoss 
+            ? `\n\n  ${chalk.bold('Total Loss:')} ${formatUSD(result.data.totalLoss)}`
+            : '';
           content = warningMessage(
-            `⚠️  Found ${result.data.ruggedCount} potentially rugged project(s):\n${tokenList}`
+            `⚠️  Found ${result.data.ruggedCount} potentially rugged project(s):${totalLossText}\n\n${tokenList}`
           );
         } else {
           content = successMessage(result.fallback || 'No rugged projects detected—clear skies ahead');

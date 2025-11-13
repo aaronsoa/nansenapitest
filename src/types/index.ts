@@ -273,8 +273,15 @@ export interface RuggedProjectsFunFact {
     ruggedTokens: Array<{
       name: string;
       symbol: string;
-      liquidity: number;
+      chain: string;
+      amountInvested: number;      // What user paid
+      currentValue: number;         // What it's worth now
+      lossPercent: number;          // % loss
+      lossAmount: number;           // $ loss
+      purchaseDate: string;         // When first bought (ISO format)
+      confidence: 'HIGH' | 'MEDIUM' | 'LOW'; // Confidence level
     }>;
+    totalLoss?: number;             // Total loss across all rugged tokens
   };
   fallback?: string;
 }

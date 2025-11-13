@@ -14,6 +14,7 @@ import { analyzeEthBenchmark } from './features/ethBenchmark';
 import { analyzePortfolioATH } from './features/portfolioATH';
 import {
   displayFunFact,
+  formatPercent,
   formatPercentColored,
   formatUSD,
   createSectionHeader,
@@ -84,12 +85,13 @@ async function runTests() {
     if (ruggedResult.success && ruggedResult.data) {
       if (ruggedResult.data.ruggedCount > 0) {
         const tokenList = ruggedResult.data.ruggedTokens
-          .map((t) => `  • ${t.symbol} (${t.name}) - Liquidity: ${formatUSD(t.liquidity)}`)
+          .map((t) => `  • ${t.symbol} (${t.chain})\n    Invested: ${formatUSD(t.amountInvested)} → Now: ${formatUSD(t.currentValue)}\n    Loss: ${formatPercent(t.lossPercent)} (${t.confidence})`)
           .join('\n');
+        const totalLossText = ruggedResult.data.totalLoss ? `\nTotal Loss: ${formatUSD(ruggedResult.data.totalLoss)}` : '';
         console.log(displayFunFact(
           4,
           'Rugged Projects',
-          warningMessage(`⚠️  Found ${ruggedResult.data.ruggedCount} potentially rugged project(s):\n${tokenList}`)
+          warningMessage(`⚠️  Found ${ruggedResult.data.ruggedCount} potentially rugged project(s):${totalLossText}\n${tokenList}`)
         ));
       } else {
         console.log(displayFunFact(4, 'Rugged Projects', successMessage('No rugged projects detected—clear skies ahead')));
