@@ -12,7 +12,12 @@ export class CoinGeckoService {
   constructor() {
     this.client = axios.create({
       baseURL: 'https://api.coingecko.com/api/v3',
-      timeout: 30000, // 30 second timeout
+      timeout: 30000, // 30 second timeout,
+      headers: {
+        // coingecko key header placeholder 'CG-`
+        // https://www.coingecko.com/en/developers/dashboard
+        // 'x-cg-demo-api-key': '',
+      },
     });
   }
 
@@ -42,6 +47,33 @@ export class CoinGeckoService {
       this.handleError('getHistoricalPrice', error);
       // Return 0 instead of throwing to allow graceful degradation
       return 0;
+    }
+  }
+
+  /**
+   * Get historical ETH price for a specific date
+   * @param date - Date string in 'yyyy-MM-dd' format
+   * @returns Historical ETH price in USD, or null if not found
+   */
+  async getHistoricalETHPrice(date: string): Promise<number | null> {
+    try {
+      const [year, month, day] = date.split('-');
+      const formattedDate = `${day}-${month}-${year}`;
+
+      const response = await this.client.get<HistoricalPriceResponse>(
+        `/coins/ethereum/history`,
+        {
+          params: {
+            date: formattedDate,
+            localization: false,
+          },
+        }
+      );
+
+      return response.data.market_data?.current_price?.usd || null;
+    } catch (error) {
+      this.handleError('getHistoricalETHPrice', error);
+      return null;
     }
   }
 

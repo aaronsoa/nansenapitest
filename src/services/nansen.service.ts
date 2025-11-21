@@ -162,39 +162,16 @@ export class NansenService {
   async getAllTransactions(request: TransactionsRequest): Promise<TransactionsResponse> {
     const allTransactions: Transaction[] = [];
     let currentPage = 1;
-    let hasMorePages = true;
-
-    while (hasMorePages) {
-      const pageRequest = {
-        ...request,
-        pagination: {
-          ...request.pagination,
-          page: currentPage,
-        },
-      };
-
-      const response = await this.getTransactions(pageRequest);
-      
-      // Check if response has valid data
-      if (!response.data || !Array.isArray(response.data)) {
-        break;
-      }
-      
-      allTransactions.push(...response.data);
-
-      // Check if there are more pages using is_last_page field
-      hasMorePages = !response.pagination?.is_last_page;
-      currentPage++;
-
-      // Safety limit to prevent infinite loops
-      if (currentPage > 100) {
-        console.warn('Reached maximum page limit (100) for transactions');
-        break;
-      }
-    }
-
+    const pageRequest = {
+      ...request,
+      pagination: {
+        ...request.pagination,
+        page: currentPage,
+      },
+    };
+    const response = await this.getTransactions(pageRequest);
     return {
-      data: allTransactions,
+      data: response.data,
       pagination: {
         total: allTransactions.length,
         page: 1,

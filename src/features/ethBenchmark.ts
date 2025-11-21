@@ -1,7 +1,6 @@
 import { subMonths, parseISO, format } from 'date-fns';
 import { nansenService } from '../services/nansen.service';
 import { coinGeckoService } from '../services/coingecko.service';
-import { PriceCacheService } from '../services/priceCache.service';
 import { EthBenchmarkFunFact } from '../types';
 
 const MIN_VOLUME_USD = 10; // Minimum $10 USD transaction volume
@@ -90,18 +89,44 @@ export async function analyzeEthBenchmark(address: string): Promise<EthBenchmark
 
     console.log(`📊 Analyzing top ${topTransactions.length} transactions (out of ${buyTransactions.length} total across all chains)`);
 
-    // Step 3: Calculate total USD spent on purchases using pre-computed prices
+    // Step 3: Extract unique dates from transactions
+    const uniqueDates = new Set<string>();
+    for (const tx of topTransactions) {
+      const txDate = parseISO(tx.block_timestamp);
+      const dateKey = format(txDate, 'yyyy-MM-dd');
+      uniqueDates.add(dateKey);
+    }
+
+    console.log(`Fetching ETH prices for ${uniqueDates.size} unique dates from CoinGecko...`);
+
+    // Step 4: Batch fetch ETH prices for all unique dates
+    const pricePromises = Array.from(uniqueDates).map((date) =>
+      coinGeckoService.getHistoricalETHPrice(date).then((price) => ({ date, price }))
+    );
+
+    const priceResults = await Promise.all(pricePromises);
+    const priceCache = new Map(
+      priceResults
+        .filter((result) => result.price && result.price > 0)
+        .map((result) => [result.date, result.price])
+    );
+
+    console.log(`✅ Fetched ${priceCache.size} ETH prices out of ${uniqueDates.size} unique dates`);
+
+    // Step 5: Calculate total USD spent and ETH equivalent using fetched prices
     let totalUsdSpent = 0;
     let totalEthEquivalent = 0;
     let pricesFound = 0;
+    
 
     for (const tx of topTransactions) {
       const usdSpent = tx.volume_usd;
       totalUsdSpent += usdSpent;
 
-      // Get ETH price at transaction time from cache (instant lookup)
+      // Get ETH price from fetched cache
       const txDate = parseISO(tx.block_timestamp);
-      const ethPrice = PriceCacheService.getEthPrice(txDate);
+      const dateKey = format(txDate, 'yyyy-MM-dd');
+      const ethPrice = priceCache.get(dateKey);
 
       if (ethPrice && ethPrice > 0) {
         const ethEquivalent = usdSpent / ethPrice;
@@ -110,7 +135,7 @@ export async function analyzeEthBenchmark(address: string): Promise<EthBenchmark
       }
     }
 
-    console.log(`✅ Found ${pricesFound} cached prices out of ${topTransactions.length} transactions`);
+    console.log(`✅ Used ${pricesFound} prices out of ${topTransactions.length} transactions`);
 
     // If we couldn't get any ETH prices, fail gracefully
     if (totalEthEquivalent === 0) {
@@ -121,7 +146,7 @@ export async function analyzeEthBenchmark(address: string): Promise<EthBenchmark
       };
     }
 
-    // Step 4: Get current ETH price
+    // Step 6: Get current ETH price
     const currentEthPriceResponse = await coinGeckoService.getCurrentPrice('ethereum');
     const currentEthPrice = currentEthPriceResponse.ethereum?.usd || 0;
 
@@ -133,14 +158,14 @@ export async function analyzeEthBenchmark(address: string): Promise<EthBenchmark
       };
     }
 
-    // Step 5: Calculate ETH equivalent portfolio value
+    // Step 7: Calculate ETH equivalent portfolio value
     const ethEquivalentValue = totalEthEquivalent * currentEthPrice;
 
-    // Step 6: Get current portfolio value (simplified - using total spent as proxy)
+    // Step 8: Get current portfolio value (simplified - using total spent as proxy)
     // In a real scenario, we'd need to fetch current token values
     const portfolioValue = totalUsdSpent; // This is a simplification
 
-    // Step 7: Calculate performance difference
+    // Step 9: Calculate performance difference
     const performancePercent = ((portfolioValue - ethEquivalentValue) / ethEquivalentValue) * 100;
 
     return {

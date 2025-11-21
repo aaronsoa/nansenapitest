@@ -40,6 +40,7 @@ export async function analyzePortfolioATH(address: string): Promise<PortfolioAth
     }
 
     const holdings = balanceResponse.data;
+    const supportedChainsSet = new Set(["ethereum","arbitrum","polygon","base","optimism"]);
 
     // Filter out ETH/native tokens and small holdings
     const tokenHoldings = holdings.filter(
@@ -48,6 +49,7 @@ export async function analyzePortfolioATH(address: string): Promise<PortfolioAth
         holding.token_address.toLowerCase() !== '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee' &&
         holding.token_address.toLowerCase() !== '0x000000000000000000000000000000000000800a' && // ZkSync ETH
         holding.chain &&
+        supportedChainsSet.has(holding.chain) &&
         holding.value_usd >= MIN_VALUE_USD // Filter out dust
     );
 
